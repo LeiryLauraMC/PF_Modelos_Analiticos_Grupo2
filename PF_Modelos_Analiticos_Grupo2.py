@@ -24,23 +24,22 @@ st.set_page_config(
 )
 
 # ──────────────────────────────────────────────────────────────
-# PALETA — Coolwarm
-# Azul frío → neutro gris-blanco → rojo cálido
+# PALETA — Coolwarm distribuida en todo el espectro
 # ──────────────────────────────────────────────────────────────
 C_TEAL_DARK   = "#2166AC"   # azul oscuro
-C_TEAL_MID    = "#4393C3"   # azul medio
-C_TEAL_LIGHT  = "#92C5DE"   # azul claro
-C_CREAM       = "#D1D1D1"   # neutro central
-C_TERRA_LIGHT = "#F4A582"   # rojo claro
-C_TERRA_DARK  = "#D6604D"   # rojo medio
-C_BRICK       = "#B2182B"   # rojo oscuro
+C_TEAL_MID    = "#6AAED6"   # azul medio
+C_TEAL_LIGHT  = "#BDD7E7"   # azul muy claro
+C_CREAM       = "#CCCCCC"   # neutro central
+C_TERRA_LIGHT = "#FCAE91"   # rojo muy claro
+C_TERRA_DARK  = "#E0452A"   # rojo medio
+C_BRICK       = "#99000D"   # rojo oscuro
 
 PALETTE_CITIES = [
-    C_TEAL_DARK, C_TEAL_MID, C_TEAL_LIGHT,
-    C_CREAM, C_TERRA_LIGHT, C_TERRA_DARK, C_BRICK,
+    C_TEAL_DARK, C_TERRA_DARK, C_TEAL_MID,
+    C_BRICK, C_TEAL_LIGHT, C_TERRA_LIGHT, C_CREAM,
 ]
 PALETTE_SEQ_TEAL  = ["#EEF5FB", "#C6DCEE", C_TEAL_LIGHT, C_TEAL_MID, C_TEAL_DARK, "#0D3A6A"]
-PALETTE_SEQ_TERRA = ["#FDF2EE", "#FCDCCC", C_TERRA_LIGHT, C_TERRA_DARK, C_BRICK, "#67001F"]
+PALETTE_SEQ_TERRA = ["#FFF5F0", "#FDD0B5", C_TERRA_LIGHT, C_TERRA_DARK, C_BRICK, "#67001F"]
 PALETTE_DIV       = [C_BRICK, C_TERRA_DARK, C_TERRA_LIGHT, C_CREAM, C_TEAL_LIGHT, C_TEAL_MID, C_TEAL_DARK]
 
 COLOR_BG      = "#F5F0EA"
