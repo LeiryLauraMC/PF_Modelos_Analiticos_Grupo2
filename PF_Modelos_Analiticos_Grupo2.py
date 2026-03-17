@@ -24,25 +24,25 @@ st.set_page_config(
 )
 
 # ──────────────────────────────────────────────────────────────
-# PALETA — Coolwarm distribuida en todo el espectro
+# PALETA — Tonos pastel
 # ──────────────────────────────────────────────────────────────
-C_TEAL_DARK   = "#2166AC"   # azul oscuro
-C_TEAL_MID    = "#6AAED6"   # azul medio
-C_TEAL_LIGHT  = "#BDD7E7"   # azul muy claro
-C_CREAM       = "#CCCCCC"   # neutro central
-C_TERRA_LIGHT = "#FCAE91"   # rojo muy claro
-C_TERRA_DARK  = "#E0452A"   # rojo medio
-C_BRICK       = "#7B4F9E"   # morado
-C_EARTH_MID   = "#A0522D"   # siena tostado
-C_EARTH_LIGHT = "#C4956A"   # arena cálida
+C_TEAL_DARK   = "#6BAED6"   # azul pastel medio
+C_TEAL_MID    = "#9ECAE1"   # azul pastel claro
+C_TEAL_LIGHT  = "#C6DBEF"   # azul pastel muy claro
+C_CREAM       = "#A1D99B"   # verde salvia pastel
+C_TERRA_LIGHT = "#FDBE85"   # durazno pastel
+C_TERRA_DARK  = "#E09BB5"   # rosa pastel
+C_BRICK       = "#BCBDDC"   # lavanda pastel
+C_EARTH_MID   = "#F4C07A"   # amarillo arena pastel
+C_EARTH_LIGHT = "#B5C9A1"   # verde oliva pastel
 
 PALETTE_CITIES = [
-    C_TEAL_DARK, C_TERRA_DARK, C_EARTH_MID,
-    C_TEAL_MID, C_BRICK, C_EARTH_LIGHT, C_TEAL_LIGHT,
+    C_TEAL_DARK, C_TERRA_DARK, C_TERRA_LIGHT,
+    C_TEAL_MID, C_BRICK, C_EARTH_MID, C_CREAM,
 ]
-PALETTE_SEQ_TEAL  = ["#EEF5FB", "#C6DCEE", C_TEAL_LIGHT, C_TEAL_MID, C_TEAL_DARK, "#0D3A6A"]
-PALETTE_SEQ_TERRA = ["#FFF5F0", "#FDD0B5", C_TERRA_LIGHT, C_EARTH_MID, C_TERRA_DARK, "#67001F"]
-PALETTE_DIV       = [C_TERRA_DARK, C_TERRA_LIGHT, C_EARTH_LIGHT, C_CREAM, C_TEAL_LIGHT, C_TEAL_MID, C_TEAL_DARK]
+PALETTE_SEQ_TEAL  = ["#EFF6FB", "#C6DBEF", C_TEAL_LIGHT, C_TEAL_MID, C_TEAL_DARK, "#3182BD"]
+PALETTE_SEQ_TERRA = ["#FFF7EC", "#FEE8C5", C_EARTH_MID, C_TERRA_LIGHT, "#E06010", "#7F2704"]
+PALETTE_DIV       = ["#D6604D", C_TERRA_LIGHT, C_EARTH_MID, "#F7F7F7", C_TEAL_LIGHT, C_TEAL_MID, C_TEAL_DARK]
 
 COLOR_BG      = "#F5F0EA"
 COLOR_CARD    = "#FDFAF6"
