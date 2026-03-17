@@ -868,7 +868,7 @@ with tab_s:
         color="ciudad",
         color_discrete_sequence=PALETTE_CITIES,
         opacity=0.65,
-        trendline="lowess",
+        trendline="ols",
         trendline_scope="overall",
         hover_data={"titulo": True, "subreddit": True},
         labels={"upvotes":"Upvotes","comentarios":"Comentarios","ciudad":"Ciudad"}
