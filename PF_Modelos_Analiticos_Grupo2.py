@@ -500,9 +500,7 @@ with tab_u:
             })
     calidad_df = pd.DataFrame(calidad_rows)
     st.dataframe(
-        calidad_df.style
-        .background_gradient(subset=["% Faltantes"], cmap="YlOrBr")
-        .format({"% Faltantes": "{:.1f}%"}),
+        calidad_df.style.format({"% Faltantes": "{:.1f}%"}),
         use_container_width=True, hide_index=True
     )
 
