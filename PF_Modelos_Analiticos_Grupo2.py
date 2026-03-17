@@ -24,23 +24,23 @@ st.set_page_config(
 )
 
 # ──────────────────────────────────────────────────────────────
-# PALETA — inspirada en la gráfica de referencia
-# Teal oscuro → teal claro → crema → terracota → rojo ladrillo
+# PALETA — Coolwarm
+# Azul frío → neutro gris-blanco → rojo cálido
 # ──────────────────────────────────────────────────────────────
-C_TEAL_DARK   = "#1A6B7A"
-C_TEAL_MID    = "#3D8FA0"
-C_TEAL_LIGHT  = "#7AB5C2"
-C_CREAM       = "#D4B9A8"
-C_TERRA_LIGHT = "#C97A5A"
-C_TERRA_DARK  = "#A0472E"
-C_BRICK       = "#B04030"
+C_TEAL_DARK   = "#2166AC"   # azul oscuro
+C_TEAL_MID    = "#4393C3"   # azul medio
+C_TEAL_LIGHT  = "#92C5DE"   # azul claro
+C_CREAM       = "#D1D1D1"   # neutro central
+C_TERRA_LIGHT = "#F4A582"   # rojo claro
+C_TERRA_DARK  = "#D6604D"   # rojo medio
+C_BRICK       = "#B2182B"   # rojo oscuro
 
 PALETTE_CITIES = [
     C_TEAL_DARK, C_TEAL_MID, C_TEAL_LIGHT,
     C_CREAM, C_TERRA_LIGHT, C_TERRA_DARK, C_BRICK,
 ]
-PALETTE_SEQ_TEAL  = ["#EAF4F7", "#A8D4DE", C_TEAL_LIGHT, C_TEAL_MID, C_TEAL_DARK, "#0F3F4A"]
-PALETTE_SEQ_TERRA = ["#FAF0EA", "#E8C5B0", C_CREAM, C_TERRA_LIGHT, C_TERRA_DARK, C_BRICK]
+PALETTE_SEQ_TEAL  = ["#EEF5FB", "#C6DCEE", C_TEAL_LIGHT, C_TEAL_MID, C_TEAL_DARK, "#0D3A6A"]
+PALETTE_SEQ_TERRA = ["#FDF2EE", "#FCDCCC", C_TERRA_LIGHT, C_TERRA_DARK, C_BRICK, "#67001F"]
 PALETTE_DIV       = [C_BRICK, C_TERRA_DARK, C_TERRA_LIGHT, C_CREAM, C_TEAL_LIGHT, C_TEAL_MID, C_TEAL_DARK]
 
 COLOR_BG      = "#F5F0EA"
@@ -565,7 +565,7 @@ with tab_q:
     city_counts.columns = ["Ciudad", "Publicaciones"]
     fig_preview = px.bar(
         city_counts, x="Publicaciones", y="Ciudad", orientation="h",
-        color="Publicaciones", color_continuous_scale=PALETTE_SEQ_TEAL[::-1],
+        color="Publicaciones", color_continuous_scale="RdBu",
         text="Publicaciones",
     )
     fig_preview.update_traces(textposition="outside", textfont_size=11)
@@ -710,7 +710,7 @@ with tab_e:
 
     fig_words = px.bar(
         wf, x="Frecuencia", y="Palabra", orientation="h",
-        color="Frecuencia", color_continuous_scale=PALETTE_SEQ_TEAL,
+        color="Frecuencia", color_continuous_scale="RdBu_r",
         text="Frecuencia",
     )
     fig_words.update_traces(textposition="outside", textfont_size=10)
@@ -744,7 +744,7 @@ with tab_e:
     )
     fig_wc = px.bar(
         wf_city, x="Frecuencia", y="Palabra", orientation="h",
-        color="Frecuencia", color_continuous_scale=PALETTE_SEQ_TERRA,
+        color="Frecuencia", color_continuous_scale="RdBu_r",
         text="Frecuencia",
     )
     fig_wc.update_traces(textposition="outside", textfont_size=10)
@@ -793,7 +793,7 @@ with tab_e:
     fig_debate = px.bar(
         debate.sort_values(col_debate, ascending=True),
         x=col_debate, y="ciudad", orientation="h",
-        color=col_debate, color_continuous_scale=PALETTE_SEQ_TEAL[::-1],
+        color=col_debate, color_continuous_scale="RdBu",
         text=col_debate,
         labels={col_debate: metrica_debate, "ciudad": "Ciudad"},
     )
@@ -867,7 +867,7 @@ with tab_s:
     )
     fig_balance = px.bar(
         balance, x="ciudad", y="balance",
-        color="balance", color_continuous_scale=PALETTE_DIV,
+        color="balance", color_continuous_scale="RdBu_r",
         labels={"balance": "Balance (positivo - negativo)", "ciudad": "Ciudad"},
         text="balance",
     )
