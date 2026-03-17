@@ -299,33 +299,14 @@ df = load_data()
 # ──────────────────────────────────────────────────────────────
 st.markdown(f"""
 <style>
-/* ── Ocultar labels nativos de multiselect/slider en sidebar ── */
-[data-testid="stSidebar"] [data-testid="stWidgetLabel"] {{
-    display: none !important;
-}}
-
-/* ── Slider personalizado ── */
-[data-testid="stSidebar"] [data-testid="stSlider"] > div > div {{
-    background: transparent !important;
-}}
-[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] [role="slider"] {{
-    background-color: {C_TEAL_DARK} !important;
-    border: 2px solid {C_TEAL_DARK} !important;
-    box-shadow: none !important;
-}}
-[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] [data-testid="stTickBar"] {{
-    background: linear-gradient(90deg, {C_TEAL_DARK}, {C_TERRA_LIGHT}) !important;
-}}
-
-/* ── Checkboxes del sidebar ── */
-[data-testid="stSidebar"] [data-testid="stCheckbox"] label {{
+/* ── Checkboxes del sidebar — texto visible ── */
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label p {{
     font-family: 'DM Sans', sans-serif !important;
     font-size: 0.82rem !important;
     color: {COLOR_TEXT} !important;
     text-transform: none !important;
     letter-spacing: 0 !important;
     font-weight: 400 !important;
-    gap: 8px !important;
 }}
 [data-testid="stSidebar"] [data-testid="stCheckbox"] input[type="checkbox"] {{
     accent-color: {C_TEAL_DARK} !important;
@@ -337,35 +318,35 @@ st.markdown(f"""
     background-color: #E8E0D5 !important;
     border: 1px solid #D4CAC0 !important;
     border-radius: 4px !important;
-    margin-bottom: 0.4rem !important;
+    margin-bottom: 0.5rem !important;
 }}
-[data-testid="stSidebar"] [data-testid="stExpander"] summary {{
+[data-testid="stSidebar"] [data-testid="stExpander"] summary p {{
     font-family: 'DM Sans', sans-serif !important;
     font-size: 0.78rem !important;
     text-transform: uppercase !important;
     letter-spacing: 0.07em !important;
     color: {COLOR_TEXT} !important;
     font-weight: 500 !important;
-    padding: 0.5rem 0.6rem !important;
 }}
-[data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {{
+[data-testid="stSidebar"] [data-testid="stExpander"] summary:hover p {{
     color: {C_TEAL_DARK} !important;
 }}
 [data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stExpanderDetails"] {{
     padding: 0.3rem 0.6rem 0.6rem !important;
     background: #EDE7DC !important;
 }}
-/* ── Botones de control (Todos / Ninguno) ── */
+/* ── Botones Todos / Ninguno ── */
 [data-testid="stSidebar"] [data-testid="stButton"] button {{
     font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.72rem !important;
+    font-size: 0.7rem !important;
     text-transform: uppercase !important;
     letter-spacing: 0.06em !important;
     color: {C_TEAL_DARK} !important;
     background: transparent !important;
     border: 1px solid {C_TEAL_DARK} !important;
     border-radius: 2px !important;
-    padding: 0.18rem 0.55rem !important;
+    padding: 0.15rem 0.5rem !important;
+    width: 100%;
     transition: all 0.15s ease;
 }}
 [data-testid="stSidebar"] [data-testid="stButton"] button:hover {{
@@ -379,35 +360,46 @@ st.markdown(f"""
 # ── Helpers para filtros con checkboxes ──────────────────────
 def filter_section(label, options, key_prefix):
     """
-    Renderiza un expander con checkboxes para cada opción.
-    Devuelve la lista de opciones seleccionadas.
+    Expander con checkboxes. Los botones Todos/Ninguno modifican
+    el session_state de cada checkbox individual ANTES de renderizarlos,
+    de modo que el re-run siguiente los muestre correctamente.
     """
-    state_key = f"_sel_{key_prefix}"
-    if state_key not in st.session_state:
-        st.session_state[state_key] = list(options)
+    options = list(options)
+
+    # Inicializar estado de cada checkbox individualmente
+    for opt in options:
+        ck = f"{key_prefix}_cb_{opt}"
+        if ck not in st.session_state:
+            st.session_state[ck] = True
+
+    # Callbacks que operan sobre los checkboxes individuales
+    def select_all():
+        for opt in options:
+            st.session_state[f"{key_prefix}_cb_{opt}"] = True
+
+    def select_none():
+        for opt in options:
+            st.session_state[f"{key_prefix}_cb_{opt}"] = False
 
     with st.expander(label, expanded=True):
         c1, c2 = st.columns(2)
-        if c1.button("Todos", key=f"{key_prefix}_all"):
-            st.session_state[state_key] = list(options)
-        if c2.button("Ninguno", key=f"{key_prefix}_none"):
-            st.session_state[state_key] = []
+        c1.button("Todos",   key=f"{key_prefix}_all",  on_click=select_all)
+        c2.button("Ninguno", key=f"{key_prefix}_none", on_click=select_none)
 
         selected = []
         for opt in options:
-            checked = opt in st.session_state[state_key]
             val = st.checkbox(
-                str(opt), value=checked, key=f"{key_prefix}_cb_{opt}"
+                str(opt),
+                key=f"{key_prefix}_cb_{opt}",
             )
             if val:
                 selected.append(opt)
 
-        st.session_state[state_key] = selected
-        n = len(selected)
-        t = len(options)
+        n, t = len(selected), len(options)
         st.markdown(
             f"<div style='font-size:0.7rem;color:{COLOR_SUBTEXT};"
-            f"margin-top:0.3rem;text-align:right;'>{n} de {t} seleccionados</div>",
+            f"margin-top:0.2rem;text-align:right;'>"
+            f"{n} de {t} seleccionados</div>",
             unsafe_allow_html=True,
         )
     return selected
