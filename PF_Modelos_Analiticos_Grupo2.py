@@ -229,7 +229,7 @@ def html_table(df_input, fmt=None):
 
 
     th_style = (
-        f"background-color:#C4C4C4;color:{COLOR_TEXT};"
+        f"background-color:#E0E0E0;color:{COLOR_TEXT};"
         f"font-family:'DM Sans',sans-serif;font-size:0.73rem;"
         f"font-weight:500;text-transform:uppercase;letter-spacing:0.07em;"
         f"padding:0.45rem 0.8rem;border-bottom:2px solid {C_TEAL_MID};"
