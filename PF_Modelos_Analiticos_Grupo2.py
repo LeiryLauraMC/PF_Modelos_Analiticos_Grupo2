@@ -210,54 +210,63 @@ def apply_theme(fig, height=400):
 
 
 # ──────────────────────────────────────────────────────────────
-# HELPER — dataframe estilizado
+# HELPER — tabla HTML estilizada (evita las limitaciones del iframe de st.dataframe)
 # ──────────────────────────────────────────────────────────────
-def styled_df(styler):
+def html_table(df_input, fmt=None):
     """
-    Aplica estilos de tabla coherentes con el diseño del dashboard.
-    Recibe un pandas Styler y devuelve uno con los estilos aplicados.
+    Renderiza un DataFrame como tabla HTML estilizada con st.markdown,
+    aplicando la paleta y tipografía del dashboard.
+    fmt: dict opcional {columna: formato}, ej. {"% Faltantes": "{:.1f}%"}
     """
-    return styler.set_table_styles([
-        {
-            "selector": "thead tr th",
-            "props": [
-                ("background-color", C_TEAL_DARK),
-                ("color", "#FDFAF6"),
-                ("font-family", "DM Sans, sans-serif"),
-                ("font-size", "0.74rem"),
-                ("font-weight", "500"),
-                ("text-transform", "uppercase"),
-                ("letter-spacing", "0.07em"),
-                ("border-bottom", f"2px solid {C_TEAL_MID}"),
-                ("padding", "0.45rem 0.7rem"),
-            ],
-        },
-        {
-            "selector": "tbody tr td",
-            "props": [
-                ("font-family", "DM Sans, sans-serif"),
-                ("font-size", "0.82rem"),
-                ("color", COLOR_TEXT),
-                ("border-bottom", f"1px solid {COLOR_GRID}"),
-                ("padding", "0.38rem 0.7rem"),
-            ],
-        },
-        {
-            "selector": "tbody tr:nth-child(even) td",
-            "props": [("background-color", "#F0EBE4")],
-        },
-        {
-            "selector": "tbody tr:hover td",
-            "props": [("background-color", "#E8F4F7")],
-        },
-        {
-            "selector": "table",
-            "props": [
-                ("border-collapse", "collapse"),
-                ("width", "100%"),
-            ],
-        },
-    ])
+    df_render = df_input.copy()
+    if fmt:
+        for col, f in fmt.items():
+            if col in df_render.columns:
+                df_render[col] = df_render[col].apply(
+                    lambda v: f.format(v) if pd.notna(v) else ""
+                )
+
+    th_style = (
+        f"background-color:{C_TEAL_DARK};color:#FDFAF6;"
+        f"font-family:'DM Sans',sans-serif;font-size:0.73rem;"
+        f"font-weight:500;text-transform:uppercase;letter-spacing:0.07em;"
+        f"padding:0.45rem 0.8rem;border-bottom:2px solid {C_TEAL_MID};"
+        f"white-space:nowrap;"
+    )
+    td_style = (
+        f"font-family:'DM Sans',sans-serif;font-size:0.82rem;"
+        f"color:{COLOR_TEXT};padding:0.38rem 0.8rem;"
+        f"border-bottom:1px solid {COLOR_GRID};"
+    )
+    td_even = f"background-color:#F0EBE4;"
+    table_style = (
+        f"border-collapse:collapse;width:100%;background:{COLOR_CARD};"
+        f"border-radius:4px;overflow:hidden;"
+    )
+
+    rows_html = ""
+    for i, (_, row) in enumerate(df_render.iterrows()):
+        bg = td_even if i % 2 == 1 else f"background-color:{COLOR_CARD};"
+        cells = "".join(
+            f'<td style="{td_style}{bg}">{v}</td>'
+            for v in row.values
+        )
+        rows_html += f"<tr>{cells}</tr>"
+
+    headers = "".join(
+        f'<th style="{th_style}">{col}</th>'
+        for col in df_render.columns
+    )
+
+    html = f"""
+    <div style="overflow-x:auto;margin-bottom:1rem;">
+    <table style="{table_style}">
+      <thead><tr>{headers}</tr></thead>
+      <tbody>{rows_html}</tbody>
+    </table>
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)
 
 
 # ──────────────────────────────────────────────────────────────
@@ -664,10 +673,7 @@ with tab_u:
                 "Valores únicos": dff[col].nunique(),
             })
     calidad_df = pd.DataFrame(calidad_rows)
-    st.dataframe(
-        styled_df(calidad_df.style.format({"% Faltantes": "{:.1f}%"})),
-        use_container_width=True, hide_index=True,
-    )
+    html_table(calidad_df, fmt={"% Faltantes": "{:.1f}%"})
 
     st.markdown("<br>", unsafe_allow_html=True)
     col_u1, col_u2 = st.columns(2)
@@ -733,10 +739,8 @@ with tab_u:
     """, unsafe_allow_html=True)
     desc = dff[["upvotes", "comentarios"]].describe(
         percentiles=[.01, .05, .25, .5, .75, .95, .99]).T
-    st.dataframe(
-        styled_df(desc.style.format("{:.1f}")),
-        use_container_width=True,
-    )
+    desc_reset = desc.reset_index().rename(columns={"index": "Variable"})
+    html_table(desc_reset, fmt={c: "{:.1f}" for c in desc_reset.columns if c != "Variable"})
 
 # ============================================================
 # E — EXPLORE
@@ -863,14 +867,17 @@ with tab_e:
     st.plotly_chart(fig_debate, use_container_width=True)
 
     with st.expander("Ver tabla completa de engagement"):
-        st.dataframe(
-            styled_df(debate.style.format({
-                "Comentarios_totales":  "{:,.0f}",
-                "Comentarios_promedio": "{:.1f}",
-                "Upvotes_totales":      "{:,.0f}",
-            })),
-            use_container_width=True, hide_index=True,
-        )
+        html_table(debate.rename(columns={
+            "ciudad": "Ciudad",
+            "Publicaciones": "Publicaciones",
+            "Comentarios_totales": "Comentarios totales",
+            "Comentarios_promedio": "Comentarios promedio",
+            "Upvotes_totales": "Upvotes totales",
+        }), fmt={
+            "Comentarios totales":  "{:,.0f}",
+            "Comentarios promedio": "{:.1f}",
+            "Upvotes totales":      "{:,.0f}",
+        })
 
 # ============================================================
 # S — STUDY
@@ -1158,15 +1165,12 @@ with tab_t:
         .reset_index()
         .sort_values("publicaciones", ascending=False)
     )
-    st.dataframe(
-        styled_df(
-            pico_por_ciudad[["ciudad", "periodo", "publicaciones"]].rename(columns={
-                "ciudad":        "Ciudad",
-                "periodo":       "Período pico",
-                "publicaciones": "Publicaciones en el pico",
-            }).style
-        ),
-        use_container_width=True, hide_index=True,
+    html_table(
+        pico_por_ciudad[["ciudad", "periodo", "publicaciones"]].rename(columns={
+            "ciudad":        "Ciudad",
+            "periodo":       "Período pico",
+            "publicaciones": "Publicaciones en el pico",
+        })
     )
 
     st.markdown("<br><br>", unsafe_allow_html=True)
