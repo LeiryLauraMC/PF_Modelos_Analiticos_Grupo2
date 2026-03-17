@@ -185,46 +185,108 @@ def apply_theme(fig, height=400):
 # ──────────────────────────────────────────────────────────────
 # NUBE DE PALABRAS INTERACTIVA (Plotly scatter de texto)
 # ──────────────────────────────────────────────────────────────
-def word_cloud_chart(tokens_series, ciudad_nombre, top_n=25):
+def word_cloud_chart(tokens_series, ciudad_nombre, top_n=30):
+    """
+    Nube de palabras con posicionamiento aleatorio por espiral,
+    tamaños proporcionales a frecuencia y colores de la paleta del dashboard.
+    """
     words = [w for toks in tokens_series for w in toks]
     if not words:
         return None
+
     wf = pd.DataFrame(Counter(words).most_common(top_n), columns=["Palabra", "Frecuencia"])
     mn, mx = wf["Frecuencia"].min(), wf["Frecuencia"].max()
-    wf["size"] = ((wf["Frecuencia"] - mn) / max(mx - mn, 1) * 16 + 11).round(1)
-    wf = wf.sample(frac=1, random_state=42).reset_index(drop=True)
+    # Tamaño de fuente: 11 px (menos frecuente) → 36 px (más frecuente)
+    wf["size"] = ((wf["Frecuencia"] - mn) / max(mx - mn, 1) * 25 + 11).round(1)
 
-    cols_per_row = 5
+    rng = np.random.default_rng(seed=7)
+
+    # Paleta: 5 colores entre teal oscuro y terracota
+    WORD_COLORS = [
+        C_TEAL_DARK, C_TEAL_MID, C_TEAL_LIGHT,
+        C_TERRA_LIGHT, C_TERRA_DARK,
+        "#4A8C9A", "#8FB5BE", "#C4956A", "#6B4226",
+    ]
+
+    # Posicionamiento en espiral de Arquímedes para distribución compacta
+    positions = []
+    placed = []
+    max_attempts = 300
+
+    for _, row in wf.iterrows():
+        # radio proporcional al tamaño de fuente
+        r_word = row["size"] * 0.018
+
+        placed_ok = False
+        angle = rng.uniform(0, 2 * np.pi)
+        step = 0.015
+        radius = 0.0
+
+        for _ in range(max_attempts):
+            x = 0.5 + radius * np.cos(angle)
+            y = 0.5 + radius * np.sin(angle) * 0.55  # aplanar verticalmente
+
+            # Verificar colisión simple con palabras ya colocadas
+            collision = False
+            for px, py, pr in placed:
+                dist = np.sqrt((x - px) ** 2 + (y - py) ** 2)
+                if dist < (r_word + pr) * 1.1:
+                    collision = True
+                    break
+
+            if not collision and 0.02 <= x <= 0.98 and 0.02 <= y <= 0.98:
+                positions.append((x, y))
+                placed.append((x, y, r_word))
+                placed_ok = True
+                break
+
+            angle += 0.4
+            radius += step * 0.3
+
+        if not placed_ok:
+            # fallback: posición aleatoria dentro del canvas
+            x = rng.uniform(0.05, 0.95)
+            y = rng.uniform(0.05, 0.95)
+            positions.append((x, y))
+            placed.append((x, y, r_word))
+
     fig = go.Figure()
-    for i, row in wf.iterrows():
-        x = (i % cols_per_row) + 0.5
-        y = -(i // cols_per_row)
-        ratio = (row["Frecuencia"] - mn) / max(mx - mn, 1)
-        # interpolar crema → teal oscuro
-        r = int(212 + (26  - 212) * ratio)
-        g = int(185 + (107 - 185) * ratio)
-        b = int(168 + (122 - 168) * ratio)
-        color = f"rgb({r},{g},{b})"
+    for i, (row_data, (x, y)) in enumerate(zip(wf.itertuples(), positions)):
+        color = WORD_COLORS[i % len(WORD_COLORS)]
+        # Rotar algunas palabras alternando horizontal/vertical
+        angle_text = 0 if i % 5 != 3 else 90
         fig.add_trace(go.Scatter(
-            x=[x], y=[y], mode="text",
-            text=[row["Palabra"]],
-            textfont=dict(size=row["size"], color=color, family="DM Sans"),
-            hovertemplate=f"<b>{row['Palabra']}</b><br>Frecuencia: {row['Frecuencia']}<extra></extra>",
+            x=[x], y=[y],
+            mode="text",
+            text=[row_data.Palabra],
+            textfont=dict(
+                size=row_data.size,
+                color=color,
+                family="DM Sans",
+            ),
+            hovertemplate=(
+                f"<b>{row_data.Palabra}</b><br>"
+                f"Frecuencia: {row_data.Frecuencia}<extra></extra>"
+            ),
             showlegend=False,
         ))
 
-    n_rows = (len(wf) // cols_per_row) + 1
     fig.update_layout(
         paper_bgcolor=COLOR_CARD,
         plot_bgcolor=COLOR_CARD,
-        xaxis=dict(visible=False, range=[0, cols_per_row]),
-        yaxis=dict(visible=False, range=[-(n_rows), 1]),
-        margin=dict(l=10, r=10, t=30, b=10),
-        height=260,
-        title=dict(text=ciudad_nombre,
-                   font=dict(family="DM Sans", size=12, color=COLOR_SUBTEXT)),
-        hoverlabel=dict(bgcolor="#2C2825", font_color="#F5F0EA",
-                        font_family="DM Sans", font_size=12),
+        xaxis=dict(visible=False, range=[0, 1]),
+        yaxis=dict(visible=False, range=[0, 1]),
+        margin=dict(l=8, r=8, t=32, b=8),
+        height=300,
+        title=dict(
+            text=ciudad_nombre,
+            font=dict(family="DM Sans", size=12, color=COLOR_SUBTEXT),
+            x=0.5, xanchor="center",
+        ),
+        hoverlabel=dict(
+            bgcolor="#2C2825", font_color="#F5F0EA",
+            font_family="DM Sans", font_size=12,
+        ),
     )
     return fig
 
@@ -707,7 +769,7 @@ with tab_e:
         for idx, city in enumerate(row_cities):
             with cols_wc[idx]:
                 fig_nube = word_cloud_chart(
-                    dff[dff["ciudad"] == city]["tokens"], city, top_n=25
+                    dff[dff["ciudad"] == city]["tokens"], city, top_n=30
                 )
                 if fig_nube:
                     st.plotly_chart(fig_nube, use_container_width=True)
