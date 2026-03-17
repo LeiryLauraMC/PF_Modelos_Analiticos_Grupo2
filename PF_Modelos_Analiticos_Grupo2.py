@@ -24,8 +24,7 @@ st.set_page_config(
 )
 
 # ──────────────────────────────────────────────────────────────
-# PALETA — inspirada en la gráfica de referencia
-# Teal oscuro → teal claro → crema → terracota → rojo ladrillo
+# PALETA
 # ──────────────────────────────────────────────────────────────
 C_TEAL_DARK   = "#1A6B7A"
 C_TEAL_MID    = "#3D8FA0"
@@ -50,7 +49,7 @@ COLOR_TEXT    = "#2C2825"
 COLOR_SUBTEXT = "#7A6F65"
 
 # ──────────────────────────────────────────────────────────────
-# ESTILOS
+# ESTILOS GLOBALES
 # ──────────────────────────────────────────────────────────────
 st.markdown(f"""
 <style>
@@ -153,6 +152,34 @@ h1, h2, h3 {{
     color: {COLOR_SUBTEXT};
     margin-bottom: 0.2rem;
 }}
+
+/* ── Tablas: encabezados y celdas ── */
+[data-testid="stDataFrame"] thead tr th {{
+    background-color: {C_TEAL_DARK} !important;
+    color: #FDFAF6 !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.07em !important;
+    border-bottom: 2px solid {C_TEAL_MID} !important;
+    padding: 0.5rem 0.75rem !important;
+}}
+[data-testid="stDataFrame"] tbody tr td {{
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.82rem !important;
+    color: {COLOR_TEXT} !important;
+    background-color: {COLOR_CARD} !important;
+    border-bottom: 1px solid {COLOR_GRID} !important;
+    padding: 0.4rem 0.75rem !important;
+}}
+[data-testid="stDataFrame"] tbody tr:nth-child(even) td {{
+    background-color: #F0EBE4 !important;
+}}
+[data-testid="stDataFrame"] tbody tr:hover td {{
+    background-color: #E8F4F7 !important;
+}}
+
 ::-webkit-scrollbar {{ width: 6px; }}
 ::-webkit-scrollbar-track {{ background: {COLOR_BG}; }}
 ::-webkit-scrollbar-thumb {{ background: #C9BDB0; border-radius: 3px; }}
@@ -182,7 +209,55 @@ def apply_theme(fig, height=400):
     return fig
 
 
-
+# ──────────────────────────────────────────────────────────────
+# HELPER — dataframe estilizado
+# ──────────────────────────────────────────────────────────────
+def styled_df(styler):
+    """
+    Aplica estilos de tabla coherentes con el diseño del dashboard.
+    Recibe un pandas Styler y devuelve uno con los estilos aplicados.
+    """
+    return styler.set_table_styles([
+        {
+            "selector": "thead tr th",
+            "props": [
+                ("background-color", C_TEAL_DARK),
+                ("color", "#FDFAF6"),
+                ("font-family", "DM Sans, sans-serif"),
+                ("font-size", "0.74rem"),
+                ("font-weight", "500"),
+                ("text-transform", "uppercase"),
+                ("letter-spacing", "0.07em"),
+                ("border-bottom", f"2px solid {C_TEAL_MID}"),
+                ("padding", "0.45rem 0.7rem"),
+            ],
+        },
+        {
+            "selector": "tbody tr td",
+            "props": [
+                ("font-family", "DM Sans, sans-serif"),
+                ("font-size", "0.82rem"),
+                ("color", COLOR_TEXT),
+                ("border-bottom", f"1px solid {COLOR_GRID}"),
+                ("padding", "0.38rem 0.7rem"),
+            ],
+        },
+        {
+            "selector": "tbody tr:nth-child(even) td",
+            "props": [("background-color", "#F0EBE4")],
+        },
+        {
+            "selector": "tbody tr:hover td",
+            "props": [("background-color", "#E8F4F7")],
+        },
+        {
+            "selector": "table",
+            "props": [
+                ("border-collapse", "collapse"),
+                ("width", "100%"),
+            ],
+        },
+    ])
 
 
 # ──────────────────────────────────────────────────────────────
@@ -295,11 +370,10 @@ def load_data():
 df = load_data()
 
 # ──────────────────────────────────────────────────────────────
-# ESTILOS EXTRA PARA FILTROS PERSONALIZADOS
+# ESTILOS EXTRA — FILTROS
 # ──────────────────────────────────────────────────────────────
 st.markdown(f"""
 <style>
-/* ── Checkboxes del sidebar — texto visible ── */
 [data-testid="stSidebar"] [data-testid="stCheckbox"] label p {{
     font-family: 'DM Sans', sans-serif !important;
     font-size: 0.82rem !important;
@@ -313,7 +387,6 @@ st.markdown(f"""
     width: 14px;
     height: 14px;
 }}
-/* ── Expanders del sidebar ── */
 [data-testid="stSidebar"] [data-testid="stExpander"] {{
     background-color: #E8E0D5 !important;
     border: 1px solid #D4CAC0 !important;
@@ -335,7 +408,6 @@ st.markdown(f"""
     padding: 0.3rem 0.6rem 0.6rem !important;
     background: #EDE7DC !important;
 }}
-/* ── Botones Todos / Ninguno ── */
 [data-testid="stSidebar"] [data-testid="stButton"] button {{
     font-family: 'DM Sans', sans-serif !important;
     font-size: 0.7rem !important;
@@ -357,22 +429,17 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 
-# ── Helpers para filtros con checkboxes ──────────────────────
+# ──────────────────────────────────────────────────────────────
+# FILTROS CON CHECKBOXES
+# ──────────────────────────────────────────────────────────────
 def filter_section(label, options, key_prefix):
-    """
-    Expander con checkboxes. Los botones Todos/Ninguno modifican
-    el session_state de cada checkbox individual ANTES de renderizarlos,
-    de modo que el re-run siguiente los muestre correctamente.
-    """
     options = list(options)
 
-    # Inicializar estado de cada checkbox individualmente
     for opt in options:
         ck = f"{key_prefix}_cb_{opt}"
         if ck not in st.session_state:
             st.session_state[ck] = True
 
-    # Callbacks que operan sobre los checkboxes individuales
     def select_all():
         for opt in options:
             st.session_state[f"{key_prefix}_cb_{opt}"] = True
@@ -388,10 +455,7 @@ def filter_section(label, options, key_prefix):
 
         selected = []
         for opt in options:
-            val = st.checkbox(
-                str(opt),
-                key=f"{key_prefix}_cb_{opt}",
-            )
+            val = st.checkbox(str(opt), key=f"{key_prefix}_cb_{opt}")
             if val:
                 selected.append(opt)
 
@@ -415,7 +479,6 @@ meses_map = {
 }
 
 with st.sidebar:
-    # ── Encabezado ──
     st.markdown(f"""
     <div style="font-family:'Playfair Display',serif;font-size:1.3rem;
     color:{COLOR_TEXT};margin-bottom:0.2rem;">Ciudades de Colombia</div>
@@ -433,7 +496,6 @@ with st.sidebar:
     margin-bottom:0.7rem;">Filtros</div>
     """, unsafe_allow_html=True)
 
-    # ── Filtros ──
     ciudades_disp = sorted(df["ciudad"].unique().tolist())
     ciudades_sel = filter_section("Ciudades", ciudades_disp, "ciudad")
 
@@ -448,12 +510,10 @@ with st.sidebar:
     subs_disp = sorted(df["subreddit"].unique().tolist())
     subs_sel = filter_section("Subreddits", subs_disp, "sub")
 
-    # ── Pie ──
     st.markdown(
         f"<div style='border-top:1px solid #D4CAC0;margin:1rem 0 0.6rem;'></div>"
         f"<div style='font-size:0.7rem;color:#9A8F85;line-height:1.6;'>"
-        "Fuente: Reddit · 2020 – 2026.<br>"
-        "Metodología QUEST.</div>",
+        "Fuente: Reddit · 2020 – 2026.<br>Metodología QUEST.</div>",
         unsafe_allow_html=True,
     )
 
@@ -605,7 +665,7 @@ with tab_u:
             })
     calidad_df = pd.DataFrame(calidad_rows)
     st.dataframe(
-        calidad_df.style.format({"% Faltantes": "{:.1f}%"}),
+        styled_df(calidad_df.style.format({"% Faltantes": "{:.1f}%"})),
         use_container_width=True, hide_index=True,
     )
 
@@ -673,7 +733,10 @@ with tab_u:
     """, unsafe_allow_html=True)
     desc = dff[["upvotes", "comentarios"]].describe(
         percentiles=[.01, .05, .25, .5, .75, .95, .99]).T
-    st.dataframe(desc.style.format("{:.1f}"), use_container_width=True)
+    st.dataframe(
+        styled_df(desc.style.format("{:.1f}")),
+        use_container_width=True,
+    )
 
 # ============================================================
 # E — EXPLORE
@@ -688,7 +751,6 @@ with tab_e:
     </div>
     """, unsafe_allow_html=True)
 
-    # P1 — Palabras más frecuentes
     st.markdown(f"""
     <div class="question-label">P1 — ¿Cuáles son las palabras más frecuentes en las publicaciones?</div>
     <div class="chart-title">Top palabras en el corpus completo</div>
@@ -724,7 +786,6 @@ with tab_e:
         unsafe_allow_html=True,
     )
 
-    # P2 — Top términos por ciudad
     st.markdown(f"""
     <div class="question-label">P2 — ¿Qué palabras aparecen más en cada ciudad?</div>
     <div class="chart-title">Top términos por ciudad seleccionada</div>
@@ -761,7 +822,6 @@ with tab_e:
         unsafe_allow_html=True,
     )
 
-    # P4 — Engagement
     st.markdown(f"""
     <div class="question-label">P4 — ¿Qué ciudades generan más debate?</div>
     <div class="chart-title">Comentarios totales y promedio por ciudad</div>
@@ -804,11 +864,11 @@ with tab_e:
 
     with st.expander("Ver tabla completa de engagement"):
         st.dataframe(
-            debate.style.format({
+            styled_df(debate.style.format({
                 "Comentarios_totales":  "{:,.0f}",
                 "Comentarios_promedio": "{:.1f}",
                 "Upvotes_totales":      "{:,.0f}",
-            }),
+            })),
             use_container_width=True, hide_index=True,
         )
 
@@ -825,7 +885,6 @@ with tab_s:
     </div>
     """, unsafe_allow_html=True)
 
-    # P3 — Sentimiento
     st.markdown(f"""
     <div class="question-label">P3 — ¿Hay más palabras con polaridad positiva o negativa?</div>
     <div class="chart-title">Análisis de sentimiento léxico por ciudad</div>
@@ -885,7 +944,6 @@ with tab_s:
         unsafe_allow_html=True,
     )
 
-    # P5 — Evolución temporal
     st.markdown(f"""
     <div class="question-label">P5 — ¿En qué períodos se habla más de cada ciudad?</div>
     <div class="chart-title">Evolución de publicaciones en el tiempo</div>
@@ -929,7 +987,6 @@ with tab_s:
         unsafe_allow_html=True,
     )
 
-    # P7 — Scatter
     st.markdown(f"""
     <div class="question-label">P7 — ¿Existen diferencias fuertes en engagement entre ciudades?</div>
     <div class="chart-title">Relación entre upvotes y comentarios por publicación</div>
@@ -1102,11 +1159,13 @@ with tab_t:
         .sort_values("publicaciones", ascending=False)
     )
     st.dataframe(
-        pico_por_ciudad[["ciudad", "periodo", "publicaciones"]].rename(columns={
-            "ciudad":        "Ciudad",
-            "periodo":       "Período pico",
-            "publicaciones": "Publicaciones en el pico",
-        }),
+        styled_df(
+            pico_por_ciudad[["ciudad", "periodo", "publicaciones"]].rename(columns={
+                "ciudad":        "Ciudad",
+                "periodo":       "Período pico",
+                "publicaciones": "Publicaciones en el pico",
+            }).style
+        ),
         use_container_width=True, hide_index=True,
     )
 
