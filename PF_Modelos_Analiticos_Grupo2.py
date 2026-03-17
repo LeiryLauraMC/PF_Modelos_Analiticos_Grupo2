@@ -182,113 +182,7 @@ def apply_theme(fig, height=400):
     return fig
 
 
-# ──────────────────────────────────────────────────────────────
-# NUBE DE PALABRAS INTERACTIVA (Plotly scatter de texto)
-# ──────────────────────────────────────────────────────────────
-def word_cloud_chart(tokens_series, ciudad_nombre, top_n=30):
-    """
-    Nube de palabras con posicionamiento aleatorio por espiral,
-    tamaños proporcionales a frecuencia y colores de la paleta del dashboard.
-    """
-    words = [w for toks in tokens_series for w in toks]
-    if not words:
-        return None
 
-    wf = pd.DataFrame(Counter(words).most_common(top_n), columns=["Palabra", "Frecuencia"])
-    mn, mx = wf["Frecuencia"].min(), wf["Frecuencia"].max()
-    # Tamaño de fuente: 11 px (menos frecuente) → 36 px (más frecuente)
-    wf["size"] = ((wf["Frecuencia"] - mn) / max(mx - mn, 1) * 25 + 11).round(1)
-
-    rng = np.random.default_rng(seed=7)
-
-    # Paleta: 5 colores entre teal oscuro y terracota
-    WORD_COLORS = [
-        C_TEAL_DARK, C_TEAL_MID, C_TEAL_LIGHT,
-        C_TERRA_LIGHT, C_TERRA_DARK,
-        "#4A8C9A", "#8FB5BE", "#C4956A", "#6B4226",
-    ]
-
-    # Posicionamiento en espiral de Arquímedes para distribución compacta
-    positions = []
-    placed = []
-    max_attempts = 300
-
-    for _, row in wf.iterrows():
-        # radio proporcional al tamaño de fuente
-        r_word = row["size"] * 0.018
-
-        placed_ok = False
-        angle = rng.uniform(0, 2 * np.pi)
-        step = 0.015
-        radius = 0.0
-
-        for _ in range(max_attempts):
-            x = 0.5 + radius * np.cos(angle)
-            y = 0.5 + radius * np.sin(angle) * 0.55  # aplanar verticalmente
-
-            # Verificar colisión simple con palabras ya colocadas
-            collision = False
-            for px, py, pr in placed:
-                dist = np.sqrt((x - px) ** 2 + (y - py) ** 2)
-                if dist < (r_word + pr) * 1.1:
-                    collision = True
-                    break
-
-            if not collision and 0.02 <= x <= 0.98 and 0.02 <= y <= 0.98:
-                positions.append((x, y))
-                placed.append((x, y, r_word))
-                placed_ok = True
-                break
-
-            angle += 0.4
-            radius += step * 0.3
-
-        if not placed_ok:
-            # fallback: posición aleatoria dentro del canvas
-            x = rng.uniform(0.05, 0.95)
-            y = rng.uniform(0.05, 0.95)
-            positions.append((x, y))
-            placed.append((x, y, r_word))
-
-    fig = go.Figure()
-    for i, (row_data, (x, y)) in enumerate(zip(wf.itertuples(), positions)):
-        color = WORD_COLORS[i % len(WORD_COLORS)]
-        # Rotar algunas palabras alternando horizontal/vertical
-        angle_text = 0 if i % 5 != 3 else 90
-        fig.add_trace(go.Scatter(
-            x=[x], y=[y],
-            mode="text",
-            text=[row_data.Palabra],
-            textfont=dict(
-                size=row_data.size,
-                color=color,
-                family="DM Sans",
-            ),
-            hovertemplate=(
-                f"<b>{row_data.Palabra}</b><br>"
-                f"Frecuencia: {row_data.Frecuencia}<extra></extra>"
-            ),
-            showlegend=False,
-        ))
-
-    fig.update_layout(
-        paper_bgcolor=COLOR_CARD,
-        plot_bgcolor=COLOR_CARD,
-        xaxis=dict(visible=False, range=[0, 1]),
-        yaxis=dict(visible=False, range=[0, 1]),
-        margin=dict(l=8, r=8, t=32, b=8),
-        height=300,
-        title=dict(
-            text=ciudad_nombre,
-            font=dict(family="DM Sans", size=12, color=COLOR_SUBTEXT),
-            x=0.5, xanchor="center",
-        ),
-        hoverlabel=dict(
-            bgcolor="#2C2825", font_color="#F5F0EA",
-            font_family="DM Sans", font_size=12,
-        ),
-    )
-    return fig
 
 
 # ──────────────────────────────────────────────────────────────
@@ -401,9 +295,135 @@ def load_data():
 df = load_data()
 
 # ──────────────────────────────────────────────────────────────
+# ESTILOS EXTRA PARA FILTROS PERSONALIZADOS
+# ──────────────────────────────────────────────────────────────
+st.markdown(f"""
+<style>
+/* ── Ocultar labels nativos de multiselect/slider en sidebar ── */
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"] {{
+    display: none !important;
+}}
+
+/* ── Slider personalizado ── */
+[data-testid="stSidebar"] [data-testid="stSlider"] > div > div {{
+    background: transparent !important;
+}}
+[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] [role="slider"] {{
+    background-color: {C_TEAL_DARK} !important;
+    border: 2px solid {C_TEAL_DARK} !important;
+    box-shadow: none !important;
+}}
+[data-testid="stSidebar"] .stSlider [data-baseweb="slider"] [data-testid="stTickBar"] {{
+    background: linear-gradient(90deg, {C_TEAL_DARK}, {C_TERRA_LIGHT}) !important;
+}}
+
+/* ── Checkboxes del sidebar ── */
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label {{
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.82rem !important;
+    color: {COLOR_TEXT} !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    font-weight: 400 !important;
+    gap: 8px !important;
+}}
+[data-testid="stSidebar"] [data-testid="stCheckbox"] input[type="checkbox"] {{
+    accent-color: {C_TEAL_DARK} !important;
+    width: 14px;
+    height: 14px;
+}}
+/* ── Expanders del sidebar ── */
+[data-testid="stSidebar"] [data-testid="stExpander"] {{
+    background-color: #E8E0D5 !important;
+    border: 1px solid #D4CAC0 !important;
+    border-radius: 4px !important;
+    margin-bottom: 0.4rem !important;
+}}
+[data-testid="stSidebar"] [data-testid="stExpander"] summary {{
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.78rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.07em !important;
+    color: {COLOR_TEXT} !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 0.6rem !important;
+}}
+[data-testid="stSidebar"] [data-testid="stExpander"] summary:hover {{
+    color: {C_TEAL_DARK} !important;
+}}
+[data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stExpanderDetails"] {{
+    padding: 0.3rem 0.6rem 0.6rem !important;
+    background: #EDE7DC !important;
+}}
+/* ── Botones de control (Todos / Ninguno) ── */
+[data-testid="stSidebar"] [data-testid="stButton"] button {{
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.72rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    color: {C_TEAL_DARK} !important;
+    background: transparent !important;
+    border: 1px solid {C_TEAL_DARK} !important;
+    border-radius: 2px !important;
+    padding: 0.18rem 0.55rem !important;
+    transition: all 0.15s ease;
+}}
+[data-testid="stSidebar"] [data-testid="stButton"] button:hover {{
+    background: {C_TEAL_DARK} !important;
+    color: #FDFAF6 !important;
+}}
+</style>
+""", unsafe_allow_html=True)
+
+
+# ── Helpers para filtros con checkboxes ──────────────────────
+def filter_section(label, options, key_prefix):
+    """
+    Renderiza un expander con checkboxes para cada opción.
+    Devuelve la lista de opciones seleccionadas.
+    """
+    state_key = f"_sel_{key_prefix}"
+    if state_key not in st.session_state:
+        st.session_state[state_key] = list(options)
+
+    with st.expander(label, expanded=True):
+        c1, c2 = st.columns(2)
+        if c1.button("Todos", key=f"{key_prefix}_all"):
+            st.session_state[state_key] = list(options)
+        if c2.button("Ninguno", key=f"{key_prefix}_none"):
+            st.session_state[state_key] = []
+
+        selected = []
+        for opt in options:
+            checked = opt in st.session_state[state_key]
+            val = st.checkbox(
+                str(opt), value=checked, key=f"{key_prefix}_cb_{opt}"
+            )
+            if val:
+                selected.append(opt)
+
+        st.session_state[state_key] = selected
+        n = len(selected)
+        t = len(options)
+        st.markdown(
+            f"<div style='font-size:0.7rem;color:{COLOR_SUBTEXT};"
+            f"margin-top:0.3rem;text-align:right;'>{n} de {t} seleccionados</div>",
+            unsafe_allow_html=True,
+        )
+    return selected
+
+
+# ──────────────────────────────────────────────────────────────
 # SIDEBAR
 # ──────────────────────────────────────────────────────────────
+meses_map = {
+    1:"Enero", 2:"Febrero", 3:"Marzo", 4:"Abril",
+    5:"Mayo", 6:"Junio", 7:"Julio", 8:"Agosto",
+    9:"Septiembre", 10:"Octubre", 11:"Noviembre", 12:"Diciembre",
+}
+
 with st.sidebar:
+    # ── Encabezado ──
     st.markdown(f"""
     <div style="font-family:'Playfair Display',serif;font-size:1.3rem;
     color:{COLOR_TEXT};margin-bottom:0.2rem;">Ciudades de Colombia</div>
@@ -411,43 +431,37 @@ with st.sidebar:
     color:{C_TEAL_DARK};text-transform:uppercase;letter-spacing:0.08em;
     margin-bottom:0.9rem;">EDA · Framework QUEST</div>
     <div style="font-family:'DM Sans',sans-serif;font-size:0.82rem;
-    color:{COLOR_SUBTEXT};line-height:1.8;margin-bottom:1.4rem;
+    color:{COLOR_SUBTEXT};line-height:1.8;margin-bottom:1.2rem;
     border-left:2px solid {C_TEAL_DARK};padding-left:0.7rem;">
-    Ferneys Araujo<br>
-    Leiry L. Mares<br>
-    María A. Pérez<br>
-    Dana V. Ramírez
+    Ferneys Araujo<br>Leiry L. Mares<br>María A. Pérez<br>Dana V. Ramírez
     </div>
+    <div style="border-top:1px solid #D4CAC0;margin-bottom:1rem;"></div>
+    <div style="font-family:'DM Sans',sans-serif;font-size:0.68rem;
+    text-transform:uppercase;letter-spacing:0.1em;color:{C_TEAL_DARK};
+    margin-bottom:0.7rem;">Filtros</div>
     """, unsafe_allow_html=True)
 
-    st.markdown("---")
-
+    # ── Filtros ──
     ciudades_disp = sorted(df["ciudad"].unique().tolist())
-    ciudades_sel = st.multiselect("Ciudades", ciudades_disp, default=ciudades_disp)
+    ciudades_sel = filter_section("Ciudades", ciudades_disp, "ciudad")
 
     años_disp = sorted(df["año"].dropna().unique().astype(int).tolist())
-    años_sel = st.multiselect("Años", años_disp, default=años_disp)
+    años_sel = filter_section("Años", años_disp, "anio")
 
-    meses_map = {
-        1:"Enero", 2:"Febrero", 3:"Marzo", 4:"Abril",
-        5:"Mayo", 6:"Junio", 7:"Julio", 8:"Agosto",
-        9:"Septiembre", 10:"Octubre", 11:"Noviembre", 12:"Diciembre",
-    }
     meses_disp = sorted(df["mes"].dropna().unique().astype(int).tolist())
-    meses_sel = st.multiselect(
-        "Meses", [meses_map[m] for m in meses_disp],
-        default=[meses_map[m] for m in meses_disp],
-    )
-    meses_num_sel = [k for k, v in meses_map.items() if v in meses_sel]
+    meses_nombres_disp = [meses_map[m] for m in meses_disp]
+    meses_nombres_sel = filter_section("Meses", meses_nombres_disp, "mes")
+    meses_num_sel = [k for k, v in meses_map.items() if v in meses_nombres_sel]
 
     subs_disp = sorted(df["subreddit"].unique().tolist())
-    subs_sel = st.multiselect("Subreddits", subs_disp, default=subs_disp)
+    subs_sel = filter_section("Subreddits", subs_disp, "sub")
 
-    st.markdown("---")
+    # ── Pie ──
     st.markdown(
-        f"<div style='font-size:0.72rem;color:#9A8F85;line-height:1.6;'>"
-        "Fuente: Reddit — publicaciones de 2020 a 2026.<br>"
-        "Análisis exploratorio bajo la metodología QUEST.</div>",
+        f"<div style='border-top:1px solid #D4CAC0;margin:1rem 0 0.6rem;'></div>"
+        f"<div style='font-size:0.7rem;color:#9A8F85;line-height:1.6;'>"
+        "Fuente: Reddit · 2020 – 2026.<br>"
+        "Metodología QUEST.</div>",
         unsafe_allow_html=True,
     )
 
@@ -677,9 +691,8 @@ with tab_e:
     <div class="section-intro">
     La fase Explore profundiza en las variables categóricas y numéricas de forma
     univariada y bivariada. Se analizan la distribución de publicaciones, el engagement
-    por ciudad, la frecuencia de palabras, los términos más representativos por ciudad
-    y las nubes de palabras que resumen visualmente el vocabulario predominante en
-    cada una de las ciudades del dataset.
+    por ciudad, la frecuencia de palabras globales y los términos más representativos
+    en cada una de las ciudades del dataset.
     </div>
     """, unsafe_allow_html=True)
 
@@ -750,29 +763,6 @@ with tab_e:
         title=f"Palabras más frecuentes — {ciudad_sel_e2}",
     )
     st.plotly_chart(fig_wc, use_container_width=True)
-
-    st.markdown(
-        "<hr style='border:none;border-top:1px solid #D9D0C5;margin:1rem 0;'>",
-        unsafe_allow_html=True,
-    )
-
-    # Nubes de palabras
-    st.markdown(f"""
-    <div class="question-label">Nube de palabras por ciudad</div>
-    <div class="chart-title">Términos más frecuentes visualizados por ciudad</div>
-    """, unsafe_allow_html=True)
-
-    top_cities_wc = dff["ciudad"].value_counts().index.tolist()
-    rows_wc = [top_cities_wc[i:i + 2] for i in range(0, len(top_cities_wc), 2)]
-    for row_cities in rows_wc:
-        cols_wc = st.columns(2)
-        for idx, city in enumerate(row_cities):
-            with cols_wc[idx]:
-                fig_nube = word_cloud_chart(
-                    dff[dff["ciudad"] == city]["tokens"], city, top_n=30
-                )
-                if fig_nube:
-                    st.plotly_chart(fig_nube, use_container_width=True)
 
     st.markdown(
         "<hr style='border:none;border-top:1px solid #D9D0C5;margin:1rem 0;'>",
