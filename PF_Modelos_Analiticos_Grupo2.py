@@ -226,8 +226,10 @@ def html_table(df_input, fmt=None):
                     lambda v: f.format(v) if pd.notna(v) else ""
                 )
 
+
+
     th_style = (
-        f"background-color:{C_TEAL_DARK};color:#FDFAF6;"
+        f"background-color:{C_TEAL_LIGHT};color:{COLOR_TEXT};"
         f"font-family:'DM Sans',sans-serif;font-size:0.73rem;"
         f"font-weight:500;text-transform:uppercase;letter-spacing:0.07em;"
         f"padding:0.45rem 0.8rem;border-bottom:2px solid {C_TEAL_MID};"
@@ -237,18 +239,17 @@ def html_table(df_input, fmt=None):
         f"font-family:'DM Sans',sans-serif;font-size:0.82rem;"
         f"color:{COLOR_TEXT};padding:0.38rem 0.8rem;"
         f"border-bottom:1px solid {COLOR_GRID};"
+        f"background-color:{COLOR_CARD};"
     )
-    td_even = f"background-color:#F0EBE4;"
     table_style = (
         f"border-collapse:collapse;width:100%;background:{COLOR_CARD};"
         f"border-radius:4px;overflow:hidden;"
     )
 
     rows_html = ""
-    for i, (_, row) in enumerate(df_render.iterrows()):
-        bg = td_even if i % 2 == 1 else f"background-color:{COLOR_CARD};"
+    for _, row in df_render.iterrows():
         cells = "".join(
-            f'<td style="{td_style}{bg}">{v}</td>'
+            f'<td style="{td_style}">{v}</td>'
             for v in row.values
         )
         rows_html += f"<tr>{cells}</tr>"
@@ -867,12 +868,12 @@ with tab_e:
     st.plotly_chart(fig_debate, use_container_width=True)
 
     with st.expander("Ver tabla completa de engagement"):
-        html_table(debate.rename(columns={
-            "ciudad": "Ciudad",
-            "Publicaciones": "Publicaciones",
+        html_table(debate.reset_index(drop=True).rename(columns={
+            "ciudad":              "Ciudad",
+            "Publicaciones":       "Publicaciones",
             "Comentarios_totales": "Comentarios totales",
-            "Comentarios_promedio": "Comentarios promedio",
-            "Upvotes_totales": "Upvotes totales",
+            "Comentarios_promedio":"Comentarios promedio",
+            "Upvotes_totales":     "Upvotes totales",
         }), fmt={
             "Comentarios totales":  "{:,.0f}",
             "Comentarios promedio": "{:.1f}",
