@@ -32,7 +32,7 @@ C_TEAL_LIGHT  = "#BDD7E7"   # azul muy claro
 C_CREAM       = "#CCCCCC"   # neutro central
 C_TERRA_LIGHT = "#FCAE91"   # rojo muy claro
 C_TERRA_DARK  = "#E0452A"   # rojo medio
-C_BRICK       = "#99000D"   # rojo oscuro
+C_BRICK       = "#7B4F9E"   # morado
 
 PALETTE_CITIES = [
     C_TEAL_DARK, C_TERRA_DARK, C_TEAL_MID,
